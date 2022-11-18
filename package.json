@@ -1,7 +1,7 @@
 {
   "name": "@jinluoni/react-native-imlib",
   "description": "React Native RongCloud IMLib",
-  "version": "5.1.3",
+  "version": "5.1.4",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
   "types": "lib/typescript/index.d.ts",
