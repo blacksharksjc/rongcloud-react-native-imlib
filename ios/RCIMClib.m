@@ -19,23 +19,23 @@ RCT_EXPORT_METHOD(init : (NSString *)key) {
     [RCIMClient.sharedRCIMClient setRCLogInfoDelegate:self];
     [RCIMClient.sharedRCIMClient setRCTypingStatusDelegate:self];
   });
-  
+
   [self addObserver];
 }
 
 - (void)addObserver {
   NSNotificationCenter *defaultCenter = [NSNotificationCenter defaultCenter];
-  
+
   [defaultCenter addObserver:self
                     selector:@selector(sendAPNSArrivedEvent:)
                         name:RC_APNS_NOTIFICATION_ARRIVED_EVENT
                       object:nil];
-  
+
   [defaultCenter addObserver:self
                     selector:@selector(sendAPNSOpenEvent:)
                         name:RC_APNS_NOTIFICATION_OPEN_EVENT
                       object:nil];
-  
+
   [defaultCenter addObserver:self
                     selector:@selector(didReceiveReadReceiptNotification:)
                         name:RCLibDispatchReadReceiptNotification
@@ -124,7 +124,7 @@ RCT_EXPORT_METHOD(sendMessage : (NSDictionary *)message : (NSString *)eventId) {
                                                               error:^(RCErrorCode errorCode, long messageId) {
         [self sendMessageError:eventId errorCode:errorCode messageId:messageId];
     }];
-    
+
     if (resendMsg != nil) {
         [self sendEventWithName:@"rcimlib-send-message"
                            body:@{
@@ -142,16 +142,16 @@ RCT_EXPORT_METHOD(resendMessageById:(NSInteger)messageId
                   pushData:(NSString *)pushData
                   eventId:(NSString *)eventId) {
     RCMessage *message = [[RCIMClient sharedRCIMClient] getMessage:messageId];
-    
+
     if (message == nil || message.sentStatus != SentStatus_FAILED) {
         [self sendMessageError:eventId errorCode:33003 messageId:messageId];
         return;
     }
-    
+
     RCMessage *resendMsg;
     if ([message.content isKindOfClass:[RCMediaMessageContent class]]) {
         resendMsg = [[RCIMClient sharedRCIMClient] sendMediaMessage:message pushContent:pushContent pushData:pushData progress:^(int progress, RCMessage *progressMessage) {
-            
+
             [self sendEventWithName:@"rcimlib-send-message"
                                body:@{
                 @"type" : @"progress",
@@ -168,7 +168,7 @@ RCT_EXPORT_METHOD(resendMessageById:(NSInteger)messageId
             }];
         } errorBlock:^(RCErrorCode nErrorCode, RCMessage *errorMessage) {
             [self sendMessageError:eventId errorCode:nErrorCode messageId:errorMessage.messageId];
-            
+
         } cancel:^(RCMessage *cancelMessage) {
             [self sendEventWithName:@"rcimlib-send-message"
                                body:@{
@@ -189,7 +189,7 @@ RCT_EXPORT_METHOD(resendMessageById:(NSInteger)messageId
             [self sendMessageError:eventId errorCode:nErrorCode messageId:errorMessage.messageId];
         }];
     }
-    
+
     if (resendMsg != nil) {
         [self sendEventWithName:@"rcimlib-send-message"
                            body:@{
@@ -200,7 +200,7 @@ RCT_EXPORT_METHOD(resendMessageById:(NSInteger)messageId
     } else {
         [self sendMessageError:eventId errorCode:DATABASE_ERROR messageId:-1];
     }
-    
+
 }
 
 RCT_EXPORT_METHOD(sendMediaMessage : (NSDictionary *)message : (NSString *)eventId) {
@@ -237,7 +237,7 @@ RCT_EXPORT_METHOD(sendMediaMessage : (NSDictionary *)message : (NSString *)event
                              @"messageId" : @(messageId),
                            }];
       }];
-    
+
     if (resendMsg != nil) {
         [self sendEventWithName:@"rcimlib-send-message"
                            body:@{
@@ -520,13 +520,15 @@ RCT_EXPORT_METHOD(downloadMediaMessage : (int)messageId : (NSString *)eventId) {
                            body:@{
                              @"type" : @"progress",
                              @"progress" : @(progress),
+                             @"eventId" : eventId,
                            }];
       }
       success:^(NSString *mediaPath) {
         [self sendEventWithName:@"rcimlib-download-media-message"
                            body:@{
-                             @"type" : @"cancel",
+                             @"type" : @"success",
                              @"path" : mediaPath,
+                             @"eventId" : eventId,
                            }];
       }
       error:^(RCErrorCode errorCode) {
@@ -534,6 +536,7 @@ RCT_EXPORT_METHOD(downloadMediaMessage : (int)messageId : (NSString *)eventId) {
                            body:@{
                              @"type" : @"error",
                              @"errorCode" : @(errorCode),
+                             @"eventId" : eventId,
                            }];
       }
       cancel:^{
@@ -1616,12 +1619,12 @@ RCT_EXPORT_METHOD(getPushContentShowStatus
 }
 
 - (void)didReceiveReadReceiptNotification:(NSNotification *)notification {
-  
+
   RCConversationType conversationType = (RCConversationType)[notification.userInfo[@"cType"] integerValue];
   long long sentTime = [notification.userInfo[@"messageTime"] longLongValue];
   NSString *targetId = notification.userInfo[@"tId"];
   NSString *senderUserId = notification.userInfo[@"fId"];
-  
+
   NSDictionary *body = @{@"conversationType": @(conversationType),
                          @"targetId": targetId,
                          @"senderUserId": senderUserId,
@@ -2003,7 +2006,7 @@ RCT_EXPORT_METHOD(getPushContentShowStatus
   message.receivedStatus = [messageDict[@"receivedStatus"] integerValue];
   message.receivedTime = [messageDict[@"receivedTime"] longLongValue];
   message.extra = messageDict[@"extra"];
-  
+
   return message;
 }
 
@@ -2064,13 +2067,13 @@ RCT_EXPORT_METHOD(getPushContentShowStatus
   if (messageContent) {
     NSDictionary *userInfo = content[@"userInfo"];
     if (userInfo) {
-        
+
         //portraitUrl  和原生层字段不一致 iOS: portraitUri
       messageContent.senderUserInfo = [[RCUserInfo alloc] initWithUserId:userInfo[@"userId"]
                                                                     name:userInfo[@"name"]
                                                                 portrait:userInfo[@"portraitUrl"]];
       messageContent.senderUserInfo.extra = userInfo[@"extra"];
-      
+
     }
 
     NSDictionary *mentionedInfo = content[@"mentionedInfo"];
