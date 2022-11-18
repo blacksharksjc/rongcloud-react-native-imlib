@@ -1,5 +1,5 @@
 {
-  "name": "@rongcloud/react-native-imlib",
+  "name": "@jinluoni/react-native-imlib",
   "description": "React Native RongCloud IMLib",
   "version": "5.1.3-release.6",
   "main": "lib/commonjs/index",
@@ -46,7 +46,7 @@
   },
   "homepage": "https://github.com/rongcloud/rongcloud-react-native-imlib#readme",
   "publishConfig": {
-    "registry": "https://registry.npmjs.org/"
+    "registry": "https://blacksharksjc16-npm.pkg.coding.net/jinluoni/npm/"
   },
   "devDependencies": {
     "@commitlint/config-conventional": "^11.0.0",
